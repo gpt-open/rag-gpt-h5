@@ -1,7 +1,13 @@
 import createAxiosInstance from "@/utils/request";
 import { CancelToken } from "axios";
 
-const request = createAxiosInstance(import.meta.env.VITE_BASE_URL);
+const hostname = window.location.hostname;
+const protocol = window.location.protocol;
+const isHttps = protocol === "https:";
+
+const guessUrl = `${protocol}//${hostname}${isHttps ? "" : ":7000"}`;
+
+const request = createAxiosInstance(import.meta.env.VITE_BASE_URL || guessUrl);
 
 export const getUserToken = (
   user_id: string

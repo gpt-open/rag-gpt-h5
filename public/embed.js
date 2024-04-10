@@ -23,8 +23,12 @@
             boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
             cursor: "pointer",
         });
+        const domainValue = document.querySelector('script[bot-domain]')?.getAttribute('bot-domain');;
+        if (!domainValue) {
+            return;
+        }
 
-        iframe.src = "http://192.168.2.11:5177/";
+        iframe.src = domainValue;
         Object.assign(iframe.style, {
             position: "fixed",
             zIndex: "10000",
@@ -48,7 +52,7 @@
     button.onclick = function () {
         const isMinWidth = window.matchMedia("(max-width: 768px)").matches || isMobile;
         const isHidden = iframe.style.transform === "scale(0)";
-        
+
         if (isHidden) {
             fireToIframe('openIframe', isMinWidth);
             iframe.style.transform = "scale(1)";
@@ -76,9 +80,9 @@
             isMinMode = !isMinMode;
         }
         if (event.data.event === 'getConfig') {
-            if(event.data.data){
+            if (event.data.data) {
                 button.innerHTML = `<img src="${event.data.data}" style="width: 50px; height: 50px;"/>`
-            }else {
+            } else {
                 button.innerHTML = "Ask";
                 button.style.color = "white";
                 button.style.backgroundColor = "#2160fd";
@@ -120,7 +124,7 @@
             document.documentElement.style.overflow = '';
             fireToIframe('resizeIframe', false);
         }
-    }    
+    }
 
     window.addEventListener('resize', adjustIframeStyleForSmallScreens);
 })();
