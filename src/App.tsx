@@ -77,7 +77,12 @@ function App() {
               return initialMessage;
             }
           );
-          setHistoryMessages((prev) => [...prev, ...initialMessages]);
+          setHistoryMessages((prev) => {
+            if (prev[prev.length - 1].isInitial) {
+              return prev;
+            }
+            return [...prev, ...initialMessages];
+          });
         }
         needInitialMessag.current = false;
       }
