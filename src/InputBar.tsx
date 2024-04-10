@@ -45,7 +45,7 @@ const InputBar = ({
         variant="outline"
         onClick={interalSendQuestion}
       >
-        {!wating ? (
+        {wating ? (
           <StopIcon className="w-6 h-6" />
         ) : (
           <PaperPlaneIcon className="w-6 h-6" />

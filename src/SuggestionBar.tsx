@@ -7,11 +7,14 @@ const SuggestionBar = ({
   messages?: string[];
   sendQuestion: (content: string) => void;
 }) => {
-  if (!messages.length) return null;
+  const notEmptyMessages = messages.filter(
+    (message) => message.trim().length > 0
+  );
+  if (!notEmptyMessages.length) return null;
 
   return (
     <div className="flex gap-2 overflow-x-auto p-3">
-      {messages.map((message, idx) => (
+      {notEmptyMessages.map((message, idx) => (
         <button
           key={idx}
           disabled={wating}
