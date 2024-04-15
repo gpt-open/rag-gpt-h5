@@ -78,7 +78,7 @@ function App() {
             }
           );
           setHistoryMessages((prev) => {
-            if (prev[prev.length - 1].isInitial) {
+            if (prev[prev.length - 1]?.isInitial) {
               return prev;
             }
             return [...prev, ...initialMessages];
