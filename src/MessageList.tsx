@@ -23,6 +23,17 @@ export interface IMessageItem {
   timestamp: number;
 }
 
+const extractIfHasExtension = (url: string) => {
+  const extensionRegex = /\.\w+$/;
+  if (url.match(extensionRegex)) {
+    const lastSlashIndex = url.lastIndexOf("/");
+    if (lastSlashIndex !== -1) {
+      return url.substring(lastSlashIndex + 1);
+    }
+  }
+  return url;
+};
+
 const MessageItem = ({
   message,
   reverse,
@@ -87,7 +98,7 @@ const MessageItem = ({
                     key={link}
                     target="_blank"
                   >
-                    {link}
+                    {extractIfHasExtension(link)}
                   </a>
                 ))}
               </div>

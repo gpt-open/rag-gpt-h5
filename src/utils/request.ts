@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getToken } from "./storage";
 
 const createAxiosInstance = (baseURL: string) => {
   const serves = axios.create({
@@ -9,7 +8,6 @@ const createAxiosInstance = (baseURL: string) => {
 
   serves.interceptors.request.use(
     async (config) => {
-      config.headers.Authorization = `Bearer ${getToken()}`;
       return config;
     },
     (err) => Promise.reject(err)

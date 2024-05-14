@@ -13,7 +13,6 @@ import {
   getHistoryMessage,
   getUserID,
   saveHistoryMessage,
-  saveToken,
   saveUserID,
 } from "./utils/storage";
 import MessageList, { IMessageItem } from "./MessageList";
@@ -51,6 +50,7 @@ function App() {
   const needInitialMessag = React.useRef(true);
   const latestConfig = React.useRef<API.BotSettings | undefined>(config);
   const currentUser = React.useRef(getUserID());
+  const authToken = React.useRef("");
   const cancelToken = React.useRef(axios.CancelToken.source());
 
   latestConfig.current = config;
@@ -106,7 +106,7 @@ function App() {
       const {
         data: { token },
       } = await getUserToken(currentUser.current!);
-      saveToken(token);
+      authToken.current = token;
       getConfig();
     } catch (error) {
       setWithError(true);
@@ -132,7 +132,12 @@ function App() {
     }
 
     if (sendContent) {
-      requestQA(sendContent, currentUser.current!, cancelToken.current.token)
+      requestQA({
+        query: sendContent,
+        user_id: currentUser.current!,
+        token: authToken.current,
+        cancelToken: cancelToken.current.token,
+      })
         .then(({ data }) => {
           const newMessage = {
             id: uuidv4(),
@@ -206,7 +211,12 @@ function App() {
     const idx = historyMessages.findIndex((msg) => msg.id === id);
     const question = historyMessages[idx - 1]?.content;
     if (question) {
-      requestQA(question, currentUser.current!, cancelToken.current.token)
+      requestQA({
+        query: question,
+        user_id: currentUser.current!,
+        token: authToken.current,
+        cancelToken: cancelToken.current.token,
+      })
         .then(({ data }) => {
           const newMessage = {
             id: uuidv4(),
