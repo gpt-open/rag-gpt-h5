@@ -1,44 +1,70 @@
-import createAxiosInstance from "@/utils/request";
-import { CancelToken } from "axios";
-
 const origin = window.location.origin;
 
-const request = createAxiosInstance(import.meta.env.VITE_BASE_URL || origin);
+const baseUrl = import.meta.env.VITE_BASE_URL || origin;
 
 export const getUserToken = (
   user_id: string
 ): Promise<API.BaseResopnse<{ token: string }>> =>
-  request.post(`/open_kf_api/auth/get_token`, {
-    user_id,
-  });
+  fetch(`${baseUrl}/open_kf_api/auth/get_token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id,
+    }),
+  }).then((res) => res.json());
 
 interface RequestQAParams {
   query: string;
   user_id: string;
   token: string;
-  cancelToken?: CancelToken;
+  controller?: AbortController;
+  onData: (data: string, query: string) => void;
 }
 
-export const requestQA = ({
+export const requestQA = async ({
   query,
   user_id,
   token,
-  cancelToken,
-}: RequestQAParams): Promise<API.BaseResopnse<API.GetAnswerData>> =>
-  request.post(
-    "/open_kf_api/queries/smart_query",
-    {
-      query,
-      user_id,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cancelToken,
+  controller,
+  onData,
+}: RequestQAParams) => {
+  try {
+    const response = await fetch(
+      `${baseUrl}/open_kf_api/queries/smart_query_stream`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ query, user_id }),
+        signal: controller?.signal,
+      }
+    );
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let done = false;
+    let result = "";
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      result += decoder.decode(value, { stream: !done });
+      onData(result, query);
     }
-  );
+    result = "";
+  } catch (error) {
+    console.error("Error during request:", error);
+    throw error;
+  }
+};
 
 export const getBotSettings = (): Promise<
   API.BaseResopnse<API.GetBotSettingsData>
-> => request.post(`/open_kf_api/bot_config/get_bot_setting`);
+> =>
+  fetch(`${baseUrl}/open_kf_api/bot_config/get_bot_setting`, {
+    method: "POST",
+  }).then((res) => res.json());

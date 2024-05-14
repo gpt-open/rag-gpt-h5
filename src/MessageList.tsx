@@ -34,6 +34,13 @@ const extractIfHasExtension = (url: string) => {
   return url;
 };
 
+const encodeSpacesInMarkdownLinks = (markdown: string) => {
+  return markdown.replace(/\[([^\]]+)\]\((.*?)\)/g, (_, text, url) => {
+    const encodedUrl = url.replace(/ /g, "%20");
+    return `[${text}](${encodedUrl})`;
+  });
+};
+
 const MessageItem = ({
   message,
   reverse,
@@ -83,7 +90,7 @@ const MessageItem = ({
                 </a>
               ),
             }}
-            source={message.content}
+            source={encodeSpacesInMarkdownLinks(message.content)}
           />
 
           {!!message.links.length && (
