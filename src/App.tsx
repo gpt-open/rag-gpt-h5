@@ -1,5 +1,4 @@
 import React from "react";
-import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Loader2, Terminal } from "lucide-react";
 import { CornersIcon, Cross1Icon, EraserIcon } from "@radix-ui/react-icons";
@@ -22,6 +21,7 @@ import SuggestionBar from "./SuggestionBar";
 const pendingMessage = {
   id: "pending_id",
   status: "pending",
+  content: "",
   links: [],
   isRecv: true,
 } as unknown as IMessageItem;
@@ -51,7 +51,7 @@ function App() {
   const latestConfig = React.useRef<API.BotSettings | undefined>(config);
   const currentUser = React.useRef(getUserID());
   const authToken = React.useRef("");
-  const cancelToken = React.useRef(axios.CancelToken.source());
+  const controller = React.useRef(new AbortController());
 
   latestConfig.current = config;
 
@@ -124,10 +124,25 @@ function App() {
     });
   };
 
+  const handleNewData = (streamString: string) => {
+    setHistoryMessages((prev) => {
+      const updatedMessages = [...prev];
+      const lastMessage = updatedMessages[updatedMessages.length - 1];
+      if (lastMessage.status === "pending") {
+        lastMessage.status = "success";
+        lastMessage.id = uuidv4();
+      }
+      lastMessage.content = streamString; // Append new content
+      lastMessage.timestamp = Date.now();
+      return updatedMessages;
+    });
+    scrollToBottom("smooth");
+  };
+
   const sendQuestion = async (sendContent: string) => {
     if (wating) {
-      cancelToken.current.cancel();
-      cancelToken.current = axios.CancelToken.source();
+      controller.current.abort();
+      controller.current = new AbortController();
       return;
     }
 
@@ -136,25 +151,11 @@ function App() {
         query: sendContent,
         user_id: currentUser.current!,
         token: authToken.current,
-        cancelToken: cancelToken.current.token,
+        controller: controller.current,
+        onData: (str) => handleNewData(str),
       })
-        .then(({ data }) => {
-          const newMessage = {
-            id: uuidv4(),
-            status: "success",
-            content: data.answer,
-            links: data.source,
-            isRecv: true,
-            timestamp: Date.now(),
-          };
-          setHistoryMessages((prev) => {
-            prev[prev.length - 1] = newMessage;
-            return prev;
-          });
-          scrollToBottom("smooth");
-        })
         .catch((error) => {
-          const isCancel = axios.isCancel(error);
+          const isCancel = error.name === "AbortError";
           const failedMessage = {
             id: uuidv4(),
             status: "failed",
@@ -171,6 +172,7 @@ function App() {
           });
         })
         .finally(() => setWating(false));
+
       const sentMessage = {
         id: uuidv4(),
         status: "success",
@@ -179,7 +181,11 @@ function App() {
         isRecv: false,
         timestamp: Date.now(),
       };
-      setHistoryMessages((prev) => [...prev, sentMessage, pendingMessage]);
+      setHistoryMessages((prev) => [
+        ...prev,
+        sentMessage,
+        { ...pendingMessage },
+      ]);
       setWating(true);
       scrollToBottom("smooth");
     }
@@ -215,25 +221,11 @@ function App() {
         query: question,
         user_id: currentUser.current!,
         token: authToken.current,
-        cancelToken: cancelToken.current.token,
+        controller: controller.current,
+        onData: (str) => handleNewData(str),
       })
-        .then(({ data }) => {
-          const newMessage = {
-            id: uuidv4(),
-            status: "success",
-            content: data.answer,
-            links: data.source,
-            isRecv: true,
-            timestamp: Date.now(),
-          };
-          setHistoryMessages((prev) => {
-            prev[idx] = newMessage;
-            return prev;
-          });
-          scrollToBottom("smooth");
-        })
         .catch((error) => {
-          const isCancel = axios.isCancel(error);
+          const isCancel = error.name === "AbortError";
           const failedMessage = {
             id: uuidv4(),
             status: "failed",
